@@ -1872,13 +1872,14 @@ const Slider = ({
   format = (v) => v.toLocaleString(),
   formatBound,
 }) => {
-  const pct = ((value - min) / (max - min)) * 100;
+  const clampedValue = Math.max(min, Math.min(max, value));
+  const pct = ((clampedValue - min) / (max - min)) * 100;
   const fmtBound = formatBound || ((v) => `${prefix}${format(v)}${suffix}`);
   return (
     <div className="slider-wrap">
       <div className="slider-value">
         {prefix && <span className="slider-value-prefix">{prefix}</span>}
-        {format(value)}
+        {format(clampedValue)}
         {suffix && <span className="slider-value-suffix">{suffix}</span>}
       </div>
       {caption && <div className="slider-caption">{caption}</div>}
@@ -1887,7 +1888,7 @@ const Slider = ({
         min={min}
         max={max}
         step={step}
-        value={value}
+        value={clampedValue}
         onChange={(e) => onChange(Number(e.target.value))}
       />
       <div className="slider-track-fill" style={{ width: `calc(${pct}% - ${pct * 0.28}px)` }} />
@@ -2352,7 +2353,7 @@ const submitToHubSpot = async (data, result) => {
 // ============================================================================
 // Persistence (cache answers across reload + restart)
 // ============================================================================
-const STORAGE_KEY = 'beehive_eligibility_v2';
+const STORAGE_KEY = 'beehive_eligibility_oman_v2';
 const loadCache = () => {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
 };
