@@ -901,19 +901,20 @@
   .combo-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
+    background: rgba(15,20,48,0.55);
+    backdrop-filter: blur(6px);
     z-index: 1000;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     animation: fadeIn 200ms var(--ease-onward);
   }
-  body.theme-light .combo-overlay { background: rgba(15,20,48,0.45); }
+  body.theme-light .combo-overlay { background: rgba(255,255,255,0.8); }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .combo-sheet {
     background: var(--bg);
     border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     width: 100%;
     max-width: 560px;
@@ -2180,7 +2181,7 @@ const StepRevenue = ({ data, set }) => {
         max={maxAED}
         step={stepAED}
         value={data.revenue}
-        onChange={(v) => set({ revenue: v })}
+        onChange={(v) => set({ revenue: v, revenueTouched: true })}
         prefix={`${ccy.symbol} `}
         format={(v) => formatAED(v * fx)}
         formatBound={(v) => v === maxAED ? `${ccy.symbol} ${formatAED(maxAED * fx)}+` : `${ccy.symbol} ${formatAED(v * fx)}`}
@@ -2205,7 +2206,7 @@ const StepLoan = ({ data, set }) => {
         max={capAED}
         step={5_000}
         value={Math.min(data.loanAmount, capAED)}
-        onChange={(v) => set({ loanAmount: v })}
+        onChange={(v) => set({ loanAmount: v, loanTouched: true })}
         prefix={`${ccy.symbol} `}
         format={(v) => formatAED(v * fx)}
         formatBound={(v) => `${ccy.symbol} ${formatAED(v * fx)}`}
@@ -2363,7 +2364,7 @@ const saveCache = (data) => {
 
 const DEFAULT_DATA = {
   businessAge: '', sector: '', industry: '',
-  revenue: 300_000, loanAmount: 50_000,
+  revenue: 300_000, loanAmount: 50_000, revenueTouched: false, loanTouched: false,
   name: '', businessName: '', email: '', phoneCode: '+968', phone: '', terms: false,
 };
 
@@ -2401,8 +2402,8 @@ const App = () => {
   const steps = useMemo(() => ([
     { id: 'age', component: StepAge, isValid: () => !!data.businessAge },
     { id: 'sector', component: StepSectorIndustry, isValid: () => !!data.sector && !!data.industry },
-    { id: 'revenue', component: StepRevenue, isValid: () => data.revenue >= 0 },
-    { id: 'loan', component: StepLoan, isValid: () => data.loanAmount > 0 },
+    { id: 'revenue', component: StepRevenue, isValid: () => !!data.revenueTouched },
+    { id: 'loan', component: StepLoan, isValid: () => !!data.loanTouched },
     { id: 'contact', component: StepContact, isValid: () => Object.keys(validateContact(data)).length === 0 },
   ]), [data]);
 
@@ -2579,7 +2580,7 @@ const App = () => {
             <TweakButton onClick={() => {
               const demo = {
                 businessAge: '2+', sector: 'trading', industry: 'RETAIL',
-                revenue: 400_000, loanAmount: 50_000,
+                revenue: 400_000, loanAmount: 50_000, revenueTouched: true, loanTouched: true,
                 name: 'Yusuf Al Rashid', businessName: 'Hive Trading LLC',
                 email: 'yusuf@hivetrading.om', phoneCode: '+968', phone: '9123 4567', terms: true,
               };
