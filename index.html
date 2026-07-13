@@ -90,6 +90,7 @@
     flex-direction: column;
     position: relative;
     z-index: 1;
+    padding-top: 72px;
   }
   #beehive-form .main {
     padding-bottom: 24px !important;
@@ -188,7 +189,7 @@
   /* Main content */
   #beehive-form .main {
     flex: 1;
-    padding: 24px 20px 60px;
+    padding: 40px 20px 60px;
     max-width: 560px;
     width: 100%;
     margin: 0 auto;
@@ -196,19 +197,27 @@
   }
 
   .step {
-    animation: stepIn 500ms var(--ease-onward) both;
+    animation: stepFade 500ms var(--ease-onward) both;
   }
-  .step.exiting {
-    animation: stepOut 300ms var(--ease-onward) both;
+  @keyframes stepFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-
-  @keyframes stepIn {
-    from { opacity: 0; transform: translateX(24px); filter: blur(4px); }
-    to { opacity: 1; transform: translateX(0); filter: blur(0); }
+  /* Smooth staggered rise of each element within a step */
+  @media (prefers-reduced-motion: no-preference) {
+    .step > * {
+      animation: stepRise 720ms var(--ease-onward) backwards;
+    }
+    .step > *:nth-child(1) { animation-delay: 60ms; }
+    .step > *:nth-child(2) { animation-delay: 180ms; }
+    .step > *:nth-child(3) { animation-delay: 300ms; }
+    .step > *:nth-child(4) { animation-delay: 410ms; }
+    .step > *:nth-child(5) { animation-delay: 510ms; }
+    .step > *:nth-child(n+6) { animation-delay: 590ms; }
   }
-  @keyframes stepOut {
-    from { opacity: 1; transform: translateX(0); filter: blur(0); }
-    to { opacity: 0; transform: translateX(-24px); filter: blur(4px); }
+  @keyframes stepRise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
   }
 
   .eyebrow {
@@ -399,7 +408,7 @@
     pointer-events: none;
     border-radius: 999px;
     background: var(--accent);
-    transition: width 100ms linear;
+    transition: none;
   }
   .slider-bounds {
     display: flex;
@@ -538,6 +547,9 @@
     padding-left: 4px;
   }
 
+  /* Hide the step footer while the industry search sheet is open */
+  body.combo-open #beehive-form .footer-nav { display: none; }
+
   /* Footer / nav — absolute inside .stage so it sits at the bottom of the form, not the viewport */
   #beehive-form .footer-nav {
     position: absolute;
@@ -615,9 +627,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 64px 20px;
-    min-height: 600px;
-    flex: 1;
+    padding: 96px 20px 120px;
+    min-height: 480px;
   }
   #beehive-form .intro-inner {
     max-width: 560px;
@@ -658,6 +669,25 @@
     align-self: flex-start;
     padding-left: 32px;
     padding-right: 32px;
+  }
+  .intro-cta svg {
+    transition: transform 300ms var(--ease-onward);
+  }
+  .intro-cta:hover svg {
+    transform: translateX(5px);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .intro-cta svg {
+      animation: arrowNudge 2.2s ease-in-out infinite;
+    }
+    .intro-cta:hover svg {
+      animation: none;
+      transform: translateX(5px);
+    }
+  }
+  @keyframes arrowNudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
   }
   @media (max-width: 480px) {
     .intro-title { font-size: 34px; }
@@ -1970,6 +2000,8 @@ const Combobox = ({ value, onChange, options, placeholder = 'Search...', trigger
 
   useEffect(() => {
     if (open && inputRef.current) inputRef.current.focus();
+    document.body.classList.toggle('combo-open', open);
+    return () => document.body.classList.remove('combo-open');
   }, [open]);
 
   const filtered = useMemo(() => {
@@ -2095,7 +2127,7 @@ const fmtMoneyForCountry = (aedValue, data) => {
 const StepAge = ({ data, set, next }) => (
   <>
     <div className="eyebrow"><span className="eyebrow-dot" />About your business</div>
-    <h1 className="q-title">How long have you been trading?</h1>
+    <h1 className="q-title">How long has your business been operating?</h1>
     <p className="q-sub">Pick the range that fits. We'll get to specifics later.</p>
     <OptionGroup
       autoAdvance
@@ -2643,6 +2675,30 @@ const ResultScreen = ({ data, result, onRestart, onStartFresh }) => {
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+// ── Auto-resize: tell the parent (Webflow) how tall the form is ──────────────
+// Eliminates the fixed-height iframe's double scrollbar + top cropping.
+(function reportHeight() {
+  var last = 0;
+  const measure = () => {
+    const el = document.getElementById('beehive-form');
+    return el ? Math.ceil(el.getBoundingClientRect().height) : 0;
+  };
+  const send = () => {
+    const h = measure();
+    if (h > 0 && Math.abs(h - last) > 1) {
+      last = h;
+      window.parent.postMessage({ beehiveFormHeight: h }, '*');
+    }
+  };
+  window.addEventListener('load', send);
+  if (window.ResizeObserver) {
+    new ResizeObserver(send).observe(document.getElementById('beehive-form') || document.body);
+  }
+  new MutationObserver(send).observe(document.body, { childList: true, subtree: true, attributes: true });
+  window.addEventListener('resize', send);
+  send();
+})();
 
   </script>
 
